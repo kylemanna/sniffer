@@ -1,4 +1,4 @@
-update=Fri 04 Sep 2020 07:43:26 PM PDT
+update=Fri 04 Sep 2020 08:38:26 PM PDT
 version=1
 last_client=kicad
 [general]
@@ -27,7 +27,7 @@ version=1
 PageLayoutDescrFile=
 LastNetListRead=sniffer.net
 CopperLayerCount=2
-BoardThickness=1.6
+BoardThickness=1
 AllowMicroVias=0
 AllowBlindVias=0
 RequireCourtyardDefinitions=0
