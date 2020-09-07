@@ -6,6 +6,12 @@ Air quality sensor integration board.
 - PMSA0003 module
 - BME680 CJMCU module
 
+## Order PCBs
+
+Want to build one?
+
+[Visit the shared project on PCBWay for direct ordering](https://www.pcbway.com/project/shareproject/Sniffer_Air_Quality_Monitor.html).
+
 ## PCB Renderings
 
 ![PCB Front](https://i.imgur.com/LyWRfs9.jpg)
