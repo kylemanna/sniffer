@@ -32,4 +32,4 @@ Want to build one?
 
 ### Software
 
-- [ ] Upload ESPHome YAML file
+- [x] Upload ESPHome YAML file

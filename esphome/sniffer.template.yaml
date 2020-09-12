@@ -1,0 +1,5 @@
+substitutions:
+  devicename: sniffer0
+  upper_devicename: Sniffer0
+
+<<: !include sniffer_common.yaml

@@ -1,0 +1,232 @@
+esphome:
+  name: $devicename
+  platform: ESP32
+  board: featheresp32
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Sniffer Fallback Hotspot"
+    password: "lost_sniffuh"
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: !secret api_password
+
+ota:
+  password: !secret ota_password
+
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_gray
+    red: 50%
+    green: 50%
+    blue: 50%
+
+# Grab font from https://fonts.google.com/specimen/Roboto and place in same directory as this file
+font:
+  - file: "Roboto-Medium.ttf"
+    id: sz_24
+    size: 24
+  - file: "Roboto-Medium.ttf"
+    id: sz_20
+    size: 20
+    glyphs: '!"%()+,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz/³µΩ'
+  - file: "Roboto-Medium.ttf"
+    id: sz_13
+    size: 13
+
+binary_sensor:
+  - platform: status
+    name: "Node Status"
+    id: system_status
+  - platform: gpio
+    pin:
+      number: GPIO0
+      inverted: true
+    name: "${upper_devicename} Button S1"
+    id: button0
+  - platform: gpio
+    pin:
+      number: GPIO35
+      inverted: true
+    name: "${upper_devicename} Button S2"
+    id: button1
+
+switch:
+  - platform: gpio
+    pin: GPIO4
+    name: "Backlight"
+    id: backlight
+    restore_mode: ALWAYS_ON
+
+time:
+  - platform: homeassistant
+    id: esptime
+    timezone: America/Los_Angeles
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+
+display:
+  - platform: st7789v
+    backlight_pin: GPIO4
+    cs_pin: GPIO5
+    dc_pin: GPIO16
+    reset_pin: GPIO23
+    update_interval: 1s
+    rotation: 270
+    lambda: |-
+      it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_blue));
+      it.rectangle(0, 19, it.get_width(), it.get_height(), id(my_blue));   // header bar
+
+      it.strftime(4,  3, id(sz_13), id(my_yellow), TextAlign::TOP_LEFT, "%Y-%m-%d %H:%M:%S", id(esptime).now());
+
+      if (id(system_status).state) {
+        it.print(236, 3, id(sz_13), id(my_green), TextAlign::TOP_RIGHT, "${upper_devicename} Online");
+      } else {
+        it.print(236, 3, id(sz_13), id(my_red), TextAlign::TOP_RIGHT, "${upper_devicename} Offline");
+      }
+      
+      int r = 18;
+
+      it.print(4,    r, id(sz_24), id(my_gray),   TextAlign::TOP_LEFT,  "PM2.5:");
+      
+      auto color = id(my_red);
+      if (id(pm_2_5_aqi).state < 50) color = id(my_green);
+      else if (id(pm_2_5_aqi).state < 100) color = id(my_yellow);
+      it.printf(236, r, id(sz_24), color, TextAlign::TOP_RIGHT, "%0.0f AQI", id(pm_2_5_aqi).state);
+      
+      r += 21;
+      it.print(4,    r, id(sz_20), id(my_gray),   TextAlign::TOP_LEFT,  "PM:");
+      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "%0.0f/%0.0f/%0.0f µg/m³", id(pm_1_0).state, id(pm_2_5).state, id(pm_10).state);
+
+      r += 25;
+      it.print(120,    r, id(sz_24), id(my_gray),   TextAlign::TOP_CENTER,  "Environment");
+
+      r += 23;
+      float temp_f = id(temp).state * (9.0/5.0) + 32.0;
+      it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT, "%0.1f°C", id(temp).state);
+      it.printf(125, r, id(sz_24), id(my_yellow), TextAlign::TOP_CENTER, "%0.1f°F", temp_f);
+      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT,  "%0.1f%%", id(humidity).state);
+
+      r += 21;
+      it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT,  "%0.1f hPa", id(pressure).state);
+      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "%0.1f kΩ", id(gas_resistance).state/1000.0);
+
+
+
+# Particulate matter configuration entry
+uart:
+  rx_pin: GPIO27
+  baud_rate: 9600
+
+# For BME680
+i2c:
+  sda: 21
+  scl: 22
+  scan: True
+  id: bus_a
+
+sensor:
+  - platform: pmsx003
+    id: pmsa003
+    type: PMSX003
+
+    pm_1_0:
+      id: pm_1_0
+      name: "${upper_devicename} PM <1.0 µm"
+      filters:
+      - sliding_window_moving_average:
+          window_size: 30
+          send_every: 10
+
+    pm_2_5:
+      id: pm_2_5
+      name: "${upper_devicename} PM <2.5 µm"
+      filters:
+      - sliding_window_moving_average:
+          window_size: 30
+          send_every: 10
+      on_value:
+        lambda: |-
+          // https://en.wikipedia.org/wiki/Air_quality_index#Computing_the_AQI
+          if (id(pm_2_5).state < 12.0) {
+            // good
+            id(pm_2_5_aqi).publish_state((50.0 - 0.0) / (12.0 - 0.0) * (id(pm_2_5).state - 0.0) + 0.0);
+          } else if (id(pm_2_5).state < 35.4) {
+            // moderate
+            id(pm_2_5_aqi).publish_state((100.0 - 51.0) / (35.4 - 12.1) * (id(pm_2_5).state - 12.1) + 51.0);
+          } else if (id(pm_2_5).state < 55.4) {
+            // usg
+            id(pm_2_5_aqi).publish_state((150.0 - 101.0) / (55.4 - 35.5) * (id(pm_2_5).state - 35.5) + 101.0);
+          } else if (id(pm_2_5).state < 150.4) {
+            // unhealthy
+            id(pm_2_5_aqi).publish_state((200.0 - 151.0) / (150.4 - 55.5) * (id(pm_2_5).state - 55.5) + 151.0);
+          } else if (id(pm_2_5).state < 150.4) {
+            // very unhealthy
+            id(pm_2_5_aqi).publish_state((300.0 - 201.0) / (250.4 - 150.5) * (id(pm_2_5).state - 150.5) + 201.0);
+          } else if (id(pm_2_5).state < 250.4) {
+            // hazardous
+            id(pm_2_5_aqi).publish_state((400.0 - 301.0) / (350.4 - 250.5) * (id(pm_2_5).state - 250.5) + 301.0);
+          } else if (id(pm_2_5).state < 500.4) {
+            // hazardous 2
+            id(pm_2_5_aqi).publish_state((500.0 - 401.0) / (500.4 - 350.5) * (id(pm_2_5).state - 350.5) + 401.0);
+          }
+
+    pm_10_0:
+      id: pm_10
+      name: "${upper_devicename} PM <10.0 µm"
+      filters:
+      - sliding_window_moving_average:
+          window_size: 30
+          send_every: 10
+
+  - platform: template
+    name: "${upper_devicename} PM 2.5 AQI"
+    unit_of_measurement: "AQI"
+    icon: "mdi:air-filter"
+    accuracy_decimals: 0
+    id: pm_2_5_aqi
+
+    
+  - platform: bme680
+    temperature:
+      id: temp
+      name: "${upper_devicename} Temperature"
+      oversampling: 16x
+    pressure:
+      id: pressure
+      name: "${upper_devicename} Pressure"
+    humidity:
+      id: humidity
+      name: "${upper_devicename} Humidity"
+    gas_resistance:
+      id: gas_resistance
+      name: "${upper_devicename} Gas Resistance"
+    address: 0x77
+    update_interval: 60s
