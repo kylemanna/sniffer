@@ -27,6 +27,7 @@ Want to build one?
 - [ ] Photograph real PCB + PCBA
 
 - [ ] Add pin labels to silk screen
+- [ ] Route out hole for TTGO T-Display battery connector so it fits flatter
 - [ ] Find someone to make a 3D printable enclosure
 
 ### Software
