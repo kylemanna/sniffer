@@ -9,7 +9,7 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Sniffer Fallback Hotspot"
+    ssid: "${upper_devicename} Fallback Hotspot"
     password: "lost_sniffuh"
 
 captive_portal:
@@ -61,7 +61,7 @@ font:
 
 binary_sensor:
   - platform: status
-    name: "Node Status"
+    name: "${upper_devicename} Node Status"
     id: system_status
   - platform: gpio
     pin:
@@ -79,7 +79,7 @@ binary_sensor:
 switch:
   - platform: gpio
     pin: GPIO4
-    name: "Backlight"
+    name: "${upper_devicename} Backlight"
     id: backlight
     restore_mode: ALWAYS_ON
 
