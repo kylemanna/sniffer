@@ -1,10 +1,19 @@
 # Sniffer
 
-Air quality sensor integration board.
+Air quality sensor integration board that couples together the following modules:
 
 - ESP32 TTGO T-Display module
 - PMSA0003 module
 - BME680 CJMCU module
+
+I use this to track the AQI in my home.  This sensor measures within 1% of 3x different [PurpleAir sensors
+scattered around my
+neighborhood](https://www.purpleair.com/map?opt=1/i/mAQI/a10/cC0#12.69/37.74937/-122.43828).  The PMSA003 particulate air sensor module in this build should be an
+improved version the PMS5003 found in the [PurpleAir
+sensors](https://www2.purpleair.com/collections/air-quality-sensors).
+
+Combined with [Home Assistant](https://www.home-assistant.io/), [InfluxDB](https://www.influxdata.com/),
+and [Grafana](https://grafana.com/) I can track the long term air quality inside and outside my home.
 
 ## Order PCBs
 

@@ -20,7 +20,7 @@ Should be http://localhost:6052 by default
 
 Copy contents of `sniffer.template.yaml` into ESPHome `sniffer0.yaml` or similar.
 
-Update the secrets file appropriately.
+Update the secrets file appropriately or use the provided template as a starting point.
 
 ### Step 4: Flash ESP32
 
