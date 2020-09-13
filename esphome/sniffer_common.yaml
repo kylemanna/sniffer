@@ -67,14 +67,22 @@ binary_sensor:
     pin:
       number: GPIO0
       inverted: true
+      mode: INPUT_PULLUP
     name: "${upper_devicename} Button S1"
     id: button0
+    on_press:
+      then:
+        - switch.toggle: backlight
+
   - platform: gpio
     pin:
       number: GPIO35
       inverted: true
     name: "${upper_devicename} Button S2"
     id: button1
+    on_press:
+      then:
+        - switch.toggle: backlight
 
 switch:
   - platform: gpio
@@ -136,7 +144,7 @@ display:
 
       r += 21;
       it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT,  "%0.1f hPa", id(pressure).state);
-      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "%0.1f kΩ", id(gas_resistance).state/1000.0);
+      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "%0.1f kΩ",  id(gas_resistance).state/1000.0);
 
 
 
@@ -207,7 +215,7 @@ sensor:
           send_every: 10
 
   - platform: template
-    name: "${upper_devicename} PM 2.5 AQI"
+    name: "${upper_devicename} PM <2.5 AQI"
     unit_of_measurement: "AQI"
     icon: "mdi:air-filter"
     accuracy_decimals: 0
