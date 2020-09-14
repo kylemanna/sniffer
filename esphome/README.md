@@ -5,10 +5,11 @@ to HomeAssistant and let HomeAssistant log to InfluxDB and visualize long-term d
 
 ## Building And Flashing the Unit
 
-### Step 1: Launch ESPHome Docker container
+### Step 1: Launch ESPHome Docker container with USB support
 
-The dev image is currently necessary for the display to function.  The documentation for the next/dev
-image is avaiable at [next.esphome.io](https://next.esphome.io/).
+    docker run --name esphome --rm -it --network host --privileged -v /dev:/dev -v $PWD:/config esphome/esphome
+
+Display support was added in ESPHome v1.15.0, but if you need dev features (docs at [next.esphome.io](https://next.esphome.io/)):
 
     docker run --name esphome --rm -it --network host --privileged -v /dev:/dev -v $PWD:/config esphome/esphome:dev
 
