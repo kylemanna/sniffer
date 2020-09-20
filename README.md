@@ -17,6 +17,10 @@ sensors](https://www2.purpleair.com/collections/air-quality-sensors).
 Combined with [Home Assistant](https://www.home-assistant.io/), [InfluxDB](https://www.influxdata.com/),
 and [Grafana](https://grafana.com/) I can track the long term air quality inside and outside my home.
 
+## Details
+
+* [Blog post with more details](https://blog.kylemanna.com/hardware/sniffer-air-quality-monitor-aqi-using-esp32-pmsa003-bme680/)
+
 ## Order PCBs
 
 Want to build one?
