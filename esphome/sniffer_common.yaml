@@ -221,3 +221,5 @@ sensor:
     accuracy_decimals: 0
     id: pm_2_5_aqi
 
+  - platform: wifi_signal
+    name: "${upper_devicename} WiFi Signal"
