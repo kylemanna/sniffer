@@ -1,0 +1,19 @@
+sensor:
+  - platform: bme280
+    address: 0x76
+    update_interval: 60s
+    temperature:
+      id: temp
+      name: "${upper_devicename} Temperature"
+      oversampling: 16x
+    pressure:
+      id: pressure
+      name: "${upper_devicename} Pressure"
+    humidity:
+      id: humidity
+      name: "${upper_devicename} Humidity"
+
+  - platform: template
+    id: gas_resistance
+    name: "${upper_devicename} Gas Resistance"
+    lambda: return {};

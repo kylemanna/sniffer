@@ -119,16 +119,16 @@ display:
       } else {
         it.print(236, 3, id(sz_13), id(my_red), TextAlign::TOP_RIGHT, "${upper_devicename} Offline");
       }
-      
+
       int r = 18;
 
       it.print(4,    r, id(sz_24), id(my_gray),   TextAlign::TOP_LEFT,  "PM2.5:");
-      
+
       auto color = id(my_red);
       if (id(pm_2_5_aqi).state < 50) color = id(my_green);
       else if (id(pm_2_5_aqi).state < 100) color = id(my_yellow);
       it.printf(236, r, id(sz_24), color, TextAlign::TOP_RIGHT, "%0.0f AQI", id(pm_2_5_aqi).state);
-      
+
       r += 21;
       it.print(4,    r, id(sz_20), id(my_gray),   TextAlign::TOP_LEFT,  "PM:");
       it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "%0.0f/%0.0f/%0.0f µg/m³", id(pm_1_0).state, id(pm_2_5).state, id(pm_10).state);
@@ -153,7 +153,7 @@ uart:
   rx_pin: GPIO27
   baud_rate: 9600
 
-# For BME680
+# For temp + humidity sensor
 i2c:
   sda: 21
   scl: 22
@@ -221,23 +221,3 @@ sensor:
     accuracy_decimals: 0
     id: pm_2_5_aqi
 
-    
-  - platform: bme680
-    address: 0x77
-    update_interval: 60s
-    temperature:
-      id: temp
-      name: "${upper_devicename} Temperature"
-      oversampling: 16x
-    pressure:
-      id: pressure
-      name: "${upper_devicename} Pressure"
-    humidity:
-      id: humidity
-      name: "${upper_devicename} Humidity"
-    gas_resistance:
-      id: gas_resistance
-      name: "${upper_devicename} Gas Resistance"
-      filters:
-      # Filter out sporadic power-up mega ohm values
-      - lambda: if (x > 1000000) { return {}; } return x;

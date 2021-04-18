@@ -1,0 +1,20 @@
+sensor:
+  - platform: bme680
+    address: 0x77
+    update_interval: 60s
+    temperature:
+      id: temp
+      name: "${upper_devicename} Temperature"
+      oversampling: 16x
+    pressure:
+      id: pressure
+      name: "${upper_devicename} Pressure"
+    humidity:
+      id: humidity
+      name: "${upper_devicename} Humidity"
+    gas_resistance:
+      id: gas_resistance
+      name: "${upper_devicename} Gas Resistance"
+      filters:
+      # Filter out sporadic power-up mega ohm values
+      - lambda: if (x > 1000000) { return {}; } return x;
