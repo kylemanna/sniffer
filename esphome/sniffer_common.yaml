@@ -94,7 +94,7 @@ switch:
 time:
   - platform: homeassistant
     id: esptime
-    timezone: America/Los_Angeles
+    timezone: Australia/Sydney
 
 spi:
   clk_pin: GPIO18
@@ -130,21 +130,27 @@ display:
       it.printf(236, r, id(sz_24), color, TextAlign::TOP_RIGHT, "%0.0f AQI", id(pm_2_5_aqi).state);
 
       r += 21;
-      it.print(4,    r, id(sz_20), id(my_gray),   TextAlign::TOP_LEFT,  "PM:");
-      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "%0.0f/%0.0f/%0.0f µg/m³", id(pm_1_0).state, id(pm_2_5).state, id(pm_10).state);
+      it.print(4,    r, id(sz_24), id(my_gray),   TextAlign::TOP_LEFT,  "VOC:");
+      
+      auto color_iaq = id(my_red);
+      if (id(iaq).state < 50) color_iaq = id(my_green);
+      else if (id(iaq).state < 100) color_iaq = id(my_yellow);
+      it.printf(236, r, id(sz_24), color_iaq, TextAlign::TOP_RIGHT, "%0.0f IAQ", id(iaq).state);
 
       r += 25;
       it.print(120,    r, id(sz_24), id(my_gray),   TextAlign::TOP_CENTER,  "Environment");
 
       r += 23;
       float temp_f = id(temp).state * (9.0/5.0) + 32.0;
-      it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT, "%0.1f°C", id(temp).state);
-      it.printf(125, r, id(sz_24), id(my_yellow), TextAlign::TOP_CENTER, "%0.1f°F", temp_f);
-      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT,  "%0.1f%%", id(humidity).state);
+      it.printf(4,   r, id(sz_24), id(my_yellow), TextAlign::TOP_LEFT, "%0.1f°C", id(temp).state);
+      
+
+      
+      it.printf(236, r, id(sz_24), id(my_yellow), TextAlign::TOP_RIGHT,  "%0.1f%%", id(humidity).state);
 
       r += 21;
       it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT,  "%0.1f hPa", id(pressure).state);
-      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "%0.1f kΩ",  id(gas_resistance).state/1000.0);
+      it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT, "co2 %0.0f ppm",  id(co2).state);
 
 
 
