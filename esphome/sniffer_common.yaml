@@ -143,9 +143,7 @@ display:
       r += 23;
       float temp_f = id(temp).state * (9.0/5.0) + 32.0;
       it.printf(4,   r, id(sz_24), id(my_yellow), TextAlign::TOP_LEFT, "%0.1f°C", id(temp).state);
-      
-
-      
+      it.printf(125, r, id(sz_24), id(my_yellow), TextAlign::TOP_CENTER, "%0.1f°F", temp_f);    
       it.printf(236, r, id(sz_24), id(my_yellow), TextAlign::TOP_RIGHT,  "%0.1f%%", id(humidity).state);
 
       r += 21;
