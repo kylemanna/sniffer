@@ -1,3 +1,9 @@
 EESchema-DOCLIB  Version 2.0
 #
+$CMP TTGO-T-Display
+D ESP32 Module with 1.14" Display and USB-C Connector
+K esp32
+F https://github.com/Xinyuan-LilyGO/TTGO-T-Display
+$ENDCMP
+#
 #End Doc Library
