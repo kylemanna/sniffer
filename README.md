@@ -5,7 +5,7 @@
 Air quality sensor integration board that couples together the following modules:
 
 - ESP32 TTGO T-Display module
-- PMSA0003 module
+- PMSA003 module
 - BME680 CJMCU module
 
 I use this to track the AQI in my home.  This sensor measures within 1% of 3x different [PurpleAir sensors
