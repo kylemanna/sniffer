@@ -1,0 +1,10 @@
+dallas:
+  - pin: GPIO12
+    update_interval: 10s
+sensor:
+  - platform: dallas
+    #address: 0x7D3C01D075ED7F28
+    index: 0
+    #update_interval: 60s
+    name: "${upper_devicename} External Temperature 1"
+    id: temp2
