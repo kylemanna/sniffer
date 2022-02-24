@@ -195,10 +195,10 @@ sensor:
           } else if (id(pm_2_5).state < 150.4) {
             // unhealthy
             id(pm_2_5_aqi).publish_state((200.0 - 151.0) / (150.4 - 55.5) * (id(pm_2_5).state - 55.5) + 151.0);
-          } else if (id(pm_2_5).state < 150.4) {
+          } else if (id(pm_2_5).state < 250.4) {
             // very unhealthy
             id(pm_2_5_aqi).publish_state((300.0 - 201.0) / (250.4 - 150.5) * (id(pm_2_5).state - 150.5) + 201.0);
-          } else if (id(pm_2_5).state < 250.4) {
+          } else if (id(pm_2_5).state < 350.4) {
             // hazardous
             id(pm_2_5_aqi).publish_state((400.0 - 301.0) / (350.4 - 250.5) * (id(pm_2_5).state - 250.5) + 301.0);
           } else if (id(pm_2_5).state < 500.4) {
