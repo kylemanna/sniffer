@@ -1,20 +1,82 @@
-sensor:
-  - platform: bme680
+bme680_bsec:
+    # i2c address
+    # -----------
+    # Common values are:
+    # - 0x76
+    # - 0x77
+    # Default: 0x76
     address: 0x77
-    update_interval: 60s
+
+    # Temperature offset
+    # ------------------
+    # Useful if device is in enclosure and reads too high
+    # Default: 0
+    temperature_offset: 3
+
+    # IAQ calculation mode
+    # --------------------
+    # Available options:
+    # - static (for fixed position devices)
+    # - mobile (for on person or other moveable devices)
+    # Default: static
+    iaq_mode: static
+
+    # Sample rate
+    # -----------
+    # Available options:
+    # - lp (low power - samples every 3 seconds)
+    # - ulp (ultra low power - samples every 5 minutes)
+    # Default: lp
+    sample_rate: lp
+
+    # Interval at which to save BSEC state
+    # ------------------------------------
+    # Default: 6h
+    state_save_interval: 6h
+ 
+ 
+sensor:
+  - platform: bme680_bsec
     temperature:
-      id: temp
-      name: "${upper_devicename} Temperature"
-      oversampling: 16x
+     id: temp
+     name: "${upper_devicename} Temperature"
+     filters:
+       - median
     pressure:
-      id: pressure
-      name: "${upper_devicename} Pressure"
+     id: pressure
+     name: "${upper_devicename} Pressure"
+     filters:
+      - median 
     humidity:
-      id: humidity
-      name: "${upper_devicename} Humidity"
+     id: humidity
+     name: "${upper_devicename} Humidity"
+     filters:
+      - median
+    iaq:
+     name: "${upper_devicename} iaq"
+     id: iaq
+     filters:
+      - median
+    breath_voc_equivalent:
+     id: voc_equ
+     name: "${upper_devicename} Breath VOC Equivalent"
+     filters:
+      - median
     gas_resistance:
-      id: gas_resistance
-      name: "${upper_devicename} Gas Resistance"
+     id: gas_resistance
+     name: "${upper_devicename} Gas Resistance"
+     filters:
+     # Filter out sporadic power-up mega ohm values
+     - lambda: if (x > 1000000) { return {}; } return x;
+    co2_equivalent:
+      # CO2 equivalent estimate in ppm
+      id: co2
+      name: "${upper_devicename} CO2 Equivalent"
       filters:
-      # Filter out sporadic power-up mega ohm values
-      - lambda: if (x > 1000000) { return {}; } return x;
+        - median
+
+text_sensor:
+  - platform: bme680_bsec
+    iaq_accuracy:
+      name: "${upper_devicename} IAQ Accuracy"
+
