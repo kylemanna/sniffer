@@ -1,6 +1,8 @@
 dallas:
-  - pin: GPIO12
+  # 4.7k ohm pull up GPIO13, don't use GPIO12 as it's a boot strapping pin
+  - pin: GPIO13
     update_interval: 60s
+
 sensor:
   - platform: dallas
     address: 0x7D3C01D075ED7F28
@@ -19,4 +21,3 @@ sensor:
     #index: 2
     name: "${upper_devicename} External Temperature 3"
     id: temp4
-
