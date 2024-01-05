@@ -87,7 +87,9 @@ binary_sensor:
 
 switch:
   - platform: gpio
-    pin: GPIO4
+    pin:
+      number: GPIO4
+      allow_other_uses: true
     name: "${upper_devicename} Backlight"
     id: backlight
     restore_mode: ALWAYS_ON
@@ -104,7 +106,9 @@ spi:
 display:
   - platform: st7789v
     model: TTGO TDisplay 135x240
-    backlight_pin: GPIO4
+    backlight_pin:
+      number: GPIO4
+      allow_other_uses: true
     cs_pin: GPIO5
     dc_pin: GPIO16
     reset_pin: GPIO23
