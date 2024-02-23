@@ -1,0 +1,251 @@
+esphome:
+  name: $devicename
+  platform: ESP32
+  board: featheresp32
+  
+substitutions:
+  devicename: sniffer0
+  upper_devicename: Sniffer0
+  mqtt_broker: "Enrter you IP of MQTT here"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${upper_devicename} Fallback Hotspot"
+    password: "lost_sniffuh"
+
+captive_portal:
+
+# Enable logging
+logger:
+ level: info 
+
+# Enable Home Assistant API
+#api:
+#  password: !secret api_password
+
+ota:
+  password: !secret ota_password
+
+
+
+# Grab font from https://fonts.google.com/specimen/Roboto and place in same directory as this file
+
+
+binary_sensor:
+  - platform: status
+    name: "${upper_devicename} Node Status"
+    id: system_status
+  - platform: gpio
+    pin:
+      number: GPIO0
+      inverted: true
+      mode: INPUT_PULLUP
+    name: "${upper_devicename} Button S1"
+    id: button0
+    on_press:
+      then:
+        - switch.toggle: backlight
+
+  - platform: gpio
+    pin:
+      number: GPIO35
+      inverted: true
+    name: "${upper_devicename} Button S2"
+    id: button1
+    on_press:
+      then:
+        - switch.toggle: backlight
+
+switch:
+  - platform: gpio
+    pin: GPIO4
+    name: "${upper_devicename} Backlight"
+    id: backlight
+    restore_mode: ALWAYS_OFF
+    
+deep_sleep:
+ run_duration: 20s
+ sleep_duration: 5min  
+ 
+ 
+mqtt:
+  broker: $mqtt_broker
+  discovery: True
+  discovery_retain: True
+  username: mqtt-user
+  password: !secret mqtt_password
+  birth_message:
+  will_message:
+
+#time:
+#  - platform: homeassistant
+#    id: esptime
+#    timezone: Australia/Sydney
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+
+
+
+
+# Particulate matter configuration entry
+uart:
+  rx_pin: GPIO27
+  baud_rate: 9600
+
+# For temp + humidity sensor
+i2c:
+  sda: 21
+  scl: 22
+  scan: True
+  id: bus_a
+
+bme680_bsec:
+    # i2c address
+    # -----------
+    # Common values are:
+    # - 0x76
+    # - 0x77
+    # Default: 0x76
+    address: 0x77
+
+    # Temperature offset
+    # ------------------
+    # Useful if device is in enclosure and reads too high
+    # Default: 0
+    temperature_offset: 3
+
+    # IAQ calculation mode
+    # --------------------
+    # Available options:
+    # - static (for fixed position devices)
+    # - mobile (for on person or other moveable devices)
+    # Default: static
+    iaq_mode: static
+
+    # Sample rate
+    # -----------
+    # Available options:
+    # - lp (low power - samples every 3 seconds)
+    # - ulp (ultra low power - samples every 5 minutes)
+    # Default: lp
+    sample_rate: ulp
+
+    # Interval at which to save BSEC state
+    # ------------------------------------
+    # Default: 6h
+    state_save_interval: 6h
+sensor:
+  - platform: bme680_bsec
+    temperature:
+     id: temp
+     name: "${upper_devicename} Temperature"
+     filters:
+       - median
+    pressure:
+     id: pressure
+     name: "${upper_devicename} Pressure"
+     filters:
+      - median 
+    humidity:
+     id: humidity
+     name: "${upper_devicename} Humidity"
+     filters:
+      - median
+    iaq:
+     name: "${upper_devicename} iaq"
+     id: iaq
+     filters:
+      - median
+    breath_voc_equivalent:
+     id: voc_equ
+     name: "${upper_devicename} Breath VOC Equivalent"
+     filters:
+      - median
+    gas_resistance:
+     id: gas_resistance
+     name: "${upper_devicename} Gas Resistance"
+     filters:
+     # Filter out sporadic power-up mega ohm values
+     - lambda: if (x > 1000000) { return {}; } return x;
+    co2_equivalent:
+      # CO2 equivalent estimate in ppm
+      id: co2
+      name: "${upper_devicename} CO2 Equivalent"
+      filters:
+        - median
+  - platform: pmsx003
+    id: pmsa003
+    type: PMSX003
+    pm_1_0:
+      id: pm_1_0
+      name: "${upper_devicename} PM <1.0 µm"
+      filters:
+      - sliding_window_moving_average:
+          window_size: 30
+          send_every: 10
+    pm_2_5:
+      id: pm_2_5
+      name: "${upper_devicename} PM <2.5 µm"
+      filters:
+      - sliding_window_moving_average:
+          window_size: 30
+          send_every: 10
+      on_value:
+        lambda: |-
+          // https://en.wikipedia.org/wiki/Air_quality_index#Computing_the_AQI
+          if (id(pm_2_5).state < 12.0) {
+            // good
+            id(pm_2_5_aqi).publish_state((50.0 - 0.0) / (12.0 - 0.0) * (id(pm_2_5).state - 0.0) + 0.0);
+          } else if (id(pm_2_5).state < 35.4) {
+            // moderate
+            id(pm_2_5_aqi).publish_state((100.0 - 51.0) / (35.4 - 12.1) * (id(pm_2_5).state - 12.1) + 51.0);
+          } else if (id(pm_2_5).state < 55.4) {
+            // usg
+            id(pm_2_5_aqi).publish_state((150.0 - 101.0) / (55.4 - 35.5) * (id(pm_2_5).state - 35.5) + 101.0);
+          } else if (id(pm_2_5).state < 150.4) {
+            // unhealthy
+            id(pm_2_5_aqi).publish_state((200.0 - 151.0) / (150.4 - 55.5) * (id(pm_2_5).state - 55.5) + 151.0);
+          } else if (id(pm_2_5).state < 150.4) {
+            // very unhealthy
+            id(pm_2_5_aqi).publish_state((300.0 - 201.0) / (250.4 - 150.5) * (id(pm_2_5).state - 150.5) + 201.0);
+          } else if (id(pm_2_5).state < 250.4) {
+            // hazardous
+            id(pm_2_5_aqi).publish_state((400.0 - 301.0) / (350.4 - 250.5) * (id(pm_2_5).state - 250.5) + 301.0);
+          } else if (id(pm_2_5).state < 500.4) {
+            // hazardous 2
+            id(pm_2_5_aqi).publish_state((500.0 - 401.0) / (500.4 - 350.5) * (id(pm_2_5).state - 350.5) + 401.0);
+          }
+
+    pm_10_0:
+      id: pm_10
+      name: "${upper_devicename} PM <10.0 µm"
+      filters:
+      - sliding_window_moving_average:
+          window_size: 30
+          send_every: 10
+
+  - platform: template
+    name: "${upper_devicename} PM <2.5 AQI"
+    unit_of_measurement: "AQI"
+    icon: "mdi:air-filter"
+    accuracy_decimals: 0
+    id: pm_2_5_aqi
+
+  - platform: wifi_signal
+    name: "${upper_devicename} WiFi Signal"
+    
+text_sensor:
+  - platform: bme680_bsec
+    iaq_accuracy:
+      name: "${upper_devicename} IAQ Accuracy"
+    
+
+  
+
+
