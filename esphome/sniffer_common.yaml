@@ -1,7 +1,11 @@
 esphome:
   name: $devicename
-  platform: ESP32
+  friendly_name: $upper_devicename
+
+esp32:
   board: featheresp32
+  framework:
+    type: esp-idf
 
 wifi:
   ssid: !secret wifi_ssid
@@ -9,13 +13,15 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "${upper_devicename} Fallback Hotspot"
+    ssid: "Fallback Hotspot"
     password: "lost_sniffuh"
 
 captive_portal:
 
 # Enable logging
 logger:
+  #level: DEBUG
+  level: INFO
 
 # Enable Home Assistant API
 api:
@@ -23,6 +29,7 @@ api:
     key: !secret ha_api_key
 
 ota:
+  platform: esphome
   password: !secret ota_password
 
 color:
@@ -49,28 +56,27 @@ color:
 
 # Grab font from https://fonts.google.com/specimen/Roboto and place in same directory as this file
 font:
-  - file: "Roboto-Medium.ttf"
+  - file: "gfonts://Roboto"
     id: sz_24
     size: 24
-  - file: "Roboto-Medium.ttf"
+  - file: "gfonts://Roboto"
     id: sz_20
     size: 20
     glyphs: '!"%()+,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz/³µΩ'
-  - file: "Roboto-Medium.ttf"
+  - file: "gfonts://Roboto"
     id: sz_13
     size: 13
 
 binary_sensor:
   - platform: status
-    name: "${upper_devicename} Node Status"
+    name: "Node Status"
     id: system_status
   - platform: gpio
     pin:
       number: GPIO0
       inverted: true
       mode: INPUT_PULLUP
-      ignore_strapping_warning: true
-    name: "${upper_devicename} Button S1"
+    name: "Button S1"
     id: button0
     on_press:
       then:
@@ -80,7 +86,7 @@ binary_sensor:
     pin:
       number: GPIO35
       inverted: true
-    name: "${upper_devicename} Button S2"
+    name: "Button S2"
     id: button1
     on_press:
       then:
@@ -88,10 +94,8 @@ binary_sensor:
 
 switch:
   - platform: gpio
-    pin:
-      number: GPIO4
-      allow_other_uses: true
-    name: "${upper_devicename} Backlight"
+    pin: GPIO4
+    name: "Backlight"
     id: backlight
     restore_mode: ALWAYS_ON
 
@@ -105,11 +109,9 @@ spi:
   mosi_pin: GPIO19
 
 display:
-  - platform: st7789v
-    model: TTGO TDisplay 135x240
-    backlight_pin:
-      number: GPIO4
-      allow_other_uses: true
+  - platform: mipi_spi
+    model: T-DISPLAY
+    #backlight_pin: GPIO4
     cs_pin: GPIO5
     dc_pin: GPIO16
     reset_pin: GPIO23
@@ -145,10 +147,8 @@ display:
 
       r += 23;
       float temp_f = id(temp).state * (9.0/5.0) + 32.0;
-      float temp2_f = id(temp2).state * (9.0/5.0) + 32.0;
-      /*it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT, "%0.1f°F", id(temp).state); */
-      it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT, "%0.1f°F", temp_f);
-      it.printf(125, r, id(sz_24), id(my_yellow), TextAlign::TOP_CENTER, "%0.1f°F", temp2_f);
+      it.printf(4,   r, id(sz_20), id(my_yellow), TextAlign::TOP_LEFT, "%0.1f°C", id(temp).state);
+      it.printf(125, r, id(sz_24), id(my_yellow), TextAlign::TOP_CENTER, "%0.1f°F", temp_f);
       it.printf(236, r, id(sz_20), id(my_yellow), TextAlign::TOP_RIGHT,  "%0.1f%%", id(humidity).state);
 
       r += 21;
@@ -162,12 +162,11 @@ uart:
   rx_pin: GPIO27
   baud_rate: 9600
 
-# For temp + humidity sensor
+# For BME680
 i2c:
   sda: 21
   scl: 22
   scan: True
-  id: bus_a
 
 sensor:
   - platform: pmsx003
@@ -176,7 +175,7 @@ sensor:
 
     pm_1_0:
       id: pm_1_0
-      name: "${upper_devicename} PM <1.0 µm"
+      name: "PM <1.0 µm"
       filters:
       - sliding_window_moving_average:
           window_size: 30
@@ -184,7 +183,7 @@ sensor:
 
     pm_2_5:
       id: pm_2_5
-      name: "${upper_devicename} PM <2.5 µm"
+      name: "PM <2.5 µm"
       filters:
       - sliding_window_moving_average:
           window_size: 30
@@ -192,43 +191,59 @@ sensor:
       on_value:
         lambda: |-
           // https://en.wikipedia.org/wiki/Air_quality_index#Computing_the_AQI
-          if (id(pm_2_5).state < 12.0) {
-            // good
-            id(pm_2_5_aqi).publish_state((50.0 - 0.0) / (12.0 - 0.0) * (id(pm_2_5).state - 0.0) + 0.0);
-          } else if (id(pm_2_5).state < 35.4) {
-            // moderate
-            id(pm_2_5_aqi).publish_state((100.0 - 51.0) / (35.4 - 12.1) * (id(pm_2_5).state - 12.1) + 51.0);
-          } else if (id(pm_2_5).state < 55.4) {
-            // usg
-            id(pm_2_5_aqi).publish_state((150.0 - 101.0) / (55.4 - 35.5) * (id(pm_2_5).state - 35.5) + 101.0);
-          } else if (id(pm_2_5).state < 150.4) {
-            // unhealthy
-            id(pm_2_5_aqi).publish_state((200.0 - 151.0) / (150.4 - 55.5) * (id(pm_2_5).state - 55.5) + 151.0);
-          } else if (id(pm_2_5).state < 250.4) {
-            // very unhealthy
-            id(pm_2_5_aqi).publish_state((300.0 - 201.0) / (250.4 - 150.5) * (id(pm_2_5).state - 150.5) + 201.0);
-          } else if (id(pm_2_5).state < 350.4) {
-            // hazardous
-            id(pm_2_5_aqi).publish_state((400.0 - 301.0) / (350.4 - 250.5) * (id(pm_2_5).state - 250.5) + 301.0);
-          } else if (id(pm_2_5).state < 500.4) {
-            // hazardous 2
-            id(pm_2_5_aqi).publish_state((500.0 - 401.0) / (500.4 - 350.5) * (id(pm_2_5).state - 350.5) + 401.0);
+          // https://web.archive.org/web/20201026120832/https://www.airnow.gov/sites/default/files/2018-05/aqi-technical-assistance-document-may2016.pdf
+          // https://document.airnow.gov/technical-assistance-document-for-the-reporting-of-daily-air-quailty.pdf
+
+          const float pts[][4] = {
+            // pm2.5_min, pm2.5_max, aqi_min, aqi_max
+            {        0.0,       9.0,     0.0,    50.0 }, // Good
+            {        9.1,      35.4,    51.0,   100.0 }, // Moderate
+            {       35.5,      55.4,   101.0,   150.0 }, // Unhealthy for sensitive groups
+            {       55.5,     125.4,   151.0,   200.0 }, // Unhealthy
+            {      125.5,     225.4,   201.0,   300.0 }, // Very Unhealthy
+            {      225.5,     325.4,   301.0,   500.0 }, // Hazardous
+          };
+          const size_t pts_len = sizeof(pts)/sizeof(pts[0]);
+          const size_t pts_max = pts_len - 1;
+
+          float aqi; // default for out of range
+          for (int i = 0; i < pts_len - 1; i++) {
+            if (id(pm_2_5).state <= pts[i][1]) {
+              aqi = ((pts[i][3] - pts[i][2]) / (pts[i][1] - pts[i][0])) * (id(pm_2_5).state - pts[i][0]) + pts[i][2];
+              id(pm_2_5_aqi).publish_state(aqi);
+              return;
+            }
           }
+          // If we make it here, then we're over the limit, per the AirNow docs:
+          //
+          // (4) AQI values between breakpoints are calculated using equation 1
+          // to this appendix. For AQI values in the hazardous category, AQI
+          // values greater than 500 should be calculated using equation 1 and
+          // the concentration specified for the AQI value of 500. The AQI value
+          // of 500 are as follows:
+          // * O3 1-hour—0.604 ppm
+          // * PM2.5 24-hour—325.4 μg/m3
+          // * PM10 24-hour—604 μg/m3
+          // * CO ppm—50.4 ppm
+          // * SO2 1-hour—1004 ppb
+          // * NO2 1-hour—2049 ppb
+          aqi = ((pts[pts_max][3] - pts[pts_max][2]) / (pts[pts_max][1] - pts[pts_max][0])) * (id(pm_2_5).state - pts[pts_max][0]) + pts[pts_max][2];
+          id(pm_2_5_aqi).publish_state(aqi);
 
     pm_10_0:
       id: pm_10
-      name: "${upper_devicename} PM <10.0 µm"
+      name: "PM <10.0 µm"
       filters:
       - sliding_window_moving_average:
           window_size: 30
           send_every: 10
 
   - platform: template
-    name: "${upper_devicename} PM <2.5 AQI"
+    name: "PM <2.5 AQI"
     unit_of_measurement: "AQI"
     icon: "mdi:air-filter"
     accuracy_decimals: 0
     id: pm_2_5_aqi
 
-  - platform: wifi_signal
-    name: "${upper_devicename} WiFi Signal"
+#web_server:
+#  port: 80
